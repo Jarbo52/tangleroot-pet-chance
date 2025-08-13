@@ -33,7 +33,8 @@ public class CropLoader
 				JsonObject cropObject = element.getAsJsonObject();
 				String name = cropObject.get("name").getAsString();
 				int baseChance = cropObject.get("baseChance").getAsInt();
-				crops.add(new Crop(name, baseChance));
+				String patchType = cropObject.get("patchType").getAsString();
+				crops.add(new Crop(name, baseChance, patchType));
 			}
 		}
 		catch (IOException exception)

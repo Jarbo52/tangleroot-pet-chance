@@ -4,7 +4,7 @@ import java.util.List;
 
 public class ChanceCalculator
 {
-	public static double calculateCumulativeChance(List<Crop> selectedCrops)
+	public static double calculateCumulativeChance(List<Crop> selectedCrops, int farmingLevel)
 	{
 		if (selectedCrops.isEmpty())
 		{
@@ -15,7 +15,13 @@ public class ChanceCalculator
 		
 		for (Crop crop : selectedCrops)
 		{
-			double individualChance = 1.0 / crop.getBaseChance();
+			int actualChance = crop.getBaseChance() - (farmingLevel * 25);
+			if (actualChance <= 0)
+			{
+				actualChance = 1;
+			}
+			
+			double individualChance = 1.0 / actualChance;
 			double failureChance = 1.0 - individualChance;
 			probabilityOfAllFailures *= failureChance;
 		}

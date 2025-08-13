@@ -4,11 +4,13 @@ public class Crop
 {
 	private final String name;
 	private final int baseChance;
+	private final String patchType;
 
-	public Crop(String name, int baseChance)
+	public Crop(String name, int baseChance, String patchType)
 	{
 		this.name = name;
 		this.baseChance = baseChance;
+		this.patchType = patchType;
 	}
 
 	public String getName()
@@ -19,6 +21,11 @@ public class Crop
 	public int getBaseChance()
 	{
 		return baseChance;
+	}
+
+	public String getPatchType()
+	{
+		return patchType;
 	}
 
 	@Override
