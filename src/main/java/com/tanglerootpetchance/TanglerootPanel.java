@@ -18,12 +18,12 @@ import java.util.LinkedHashSet;
 public class TanglerootPanel extends PluginPanel
 {
 	private final List<Crop> availableCrops = new ArrayList<>();
-	private final List<Crop> selectedCrops = new ArrayList<>();
-	private final DefaultListModel<Crop> selectedCropsModel = new DefaultListModel<>();
+	private final List<CropEntry> selectedCropEntries = new ArrayList<>();
+	private final DefaultListModel<CropEntry> selectedCropsModel = new DefaultListModel<>();
 	
 	private JComboBox<String> patchTypeComboBox;
 	private JComboBox<Crop> cropComboBox;
-	private JList<Crop> selectedCropsList;
+	private JList<CropEntry> selectedCropsList;
 	private JLabel chanceLabel;
 	private JLabel fractionLabel;
 	private JButton addButton;
@@ -73,9 +73,14 @@ public class TanglerootPanel extends PluginPanel
 
 		selectedCropsList = new JList<>(selectedCropsModel);
 		selectedCropsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		selectedCropsList.setVisibleRowCount(6);
+		selectedCropsList.setPreferredSize(new Dimension(200, 120));
 
-		chanceLabel = new JLabel("0.000000%");
-		fractionLabel = new JLabel("0");
+		chanceLabel = new JLabel("0.000000%", SwingConstants.CENTER);
+		chanceLabel.setFont(chanceLabel.getFont().deriveFont(Font.BOLD, 24f));
+		
+		fractionLabel = new JLabel("0", SwingConstants.CENTER);
+		fractionLabel.setFont(fractionLabel.getFont().deriveFont(Font.BOLD, 24f));
 
 		farmingLevelField = new JTextField("99", 5);
 		farmingLevelField.addActionListener(e -> updateChanceDisplay());
@@ -144,15 +149,25 @@ public class TanglerootPanel extends PluginPanel
 		
 		topPanel.add(buttonPanel, BorderLayout.SOUTH);
 
-		JPanel centerPanel = new JPanel(new BorderLayout());
-		centerPanel.add(new JLabel("Selected crops:"), BorderLayout.NORTH);
-		centerPanel.add(new JScrollPane(selectedCropsList), BorderLayout.CENTER);
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+		
+		JLabel cropsLabel = new JLabel("Selected crops:");
+		cropsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		centerPanel.add(cropsLabel);
+		
+		JScrollPane scrollPane = new JScrollPane(selectedCropsList);
+		scrollPane.setPreferredSize(new Dimension(200, 360));
+		scrollPane.setMaximumSize(new Dimension(200, 360));
+		scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.setAlignmentX(Component.CENTER_ALIGNMENT);
+		centerPanel.add(scrollPane);
 
 		JPanel resultPanel = new JPanel(new GridLayout(4, 1));
-		resultPanel.setBorder(BorderFactory.createTitledBorder("Tangleroot Chance"));
-		resultPanel.add(new JLabel("Percentage:"));
+		resultPanel.add(new JLabel("Percentage:", SwingConstants.CENTER));
 		resultPanel.add(chanceLabel);
-		resultPanel.add(new JLabel("Fraction:"));
+		resultPanel.add(new JLabel("Fraction:", SwingConstants.CENTER));
 		resultPanel.add(fractionLabel);
 
 		add(topPanel, BorderLayout.NORTH);
@@ -210,7 +225,16 @@ public class TanglerootPanel extends PluginPanel
 			farmingLevel = 99;
 		}
 
-		double chance = ChanceCalculator.calculateCumulativeChance(selectedCrops, farmingLevel);
+		List<Crop> expandedCrops = new ArrayList<>();
+		for (CropEntry entry : selectedCropEntries)
+		{
+			for (int i = 0; i < entry.getQuantity(); i++)
+			{
+				expandedCrops.add(entry.getCrop());
+			}
+		}
+
+		double chance = ChanceCalculator.calculateCumulativeChance(expandedCrops, farmingLevel);
 		chanceLabel.setText(ChanceCalculator.formatPercentage(chance));
 		fractionLabel.setText(ChanceCalculator.formatFraction(chance));
 	}
@@ -223,8 +247,28 @@ public class TanglerootPanel extends PluginPanel
 			Crop selectedCrop = (Crop) cropComboBox.getSelectedItem();
 			if (selectedCrop != null)
 			{
-				selectedCrops.add(selectedCrop);
-				selectedCropsModel.addElement(selectedCrop);
+				CropEntry existingEntry = null;
+				for (CropEntry entry : selectedCropEntries)
+				{
+					if (entry.getCrop().getName().equals(selectedCrop.getName()))
+					{
+						existingEntry = entry;
+						break;
+					}
+				}
+
+				if (existingEntry != null)
+				{
+					existingEntry.incrementQuantity();
+					int index = selectedCropsModel.indexOf(existingEntry);
+					selectedCropsModel.setElementAt(existingEntry, index);
+				}
+				else
+				{
+					CropEntry newEntry = new CropEntry(selectedCrop, 1);
+					selectedCropEntries.add(newEntry);
+					selectedCropsModel.addElement(newEntry);
+				}
 				updateChanceDisplay();
 			}
 		}
@@ -238,9 +282,18 @@ public class TanglerootPanel extends PluginPanel
 			int selectedIndex = selectedCropsList.getSelectedIndex();
 			if (selectedIndex != -1)
 			{
-				Crop cropToRemove = selectedCropsModel.getElementAt(selectedIndex);
-				selectedCrops.remove(cropToRemove);
-				selectedCropsModel.removeElementAt(selectedIndex);
+				CropEntry entryToRemove = selectedCropsModel.getElementAt(selectedIndex);
+				entryToRemove.decrementQuantity();
+				
+				if (entryToRemove.getQuantity() <= 0)
+				{
+					selectedCropEntries.remove(entryToRemove);
+					selectedCropsModel.removeElementAt(selectedIndex);
+				}
+				else
+				{
+					selectedCropsModel.setElementAt(entryToRemove, selectedIndex);
+				}
 				updateChanceDisplay();
 			}
 		}
@@ -251,7 +304,7 @@ public class TanglerootPanel extends PluginPanel
 		@Override
 		public void actionPerformed(ActionEvent event)
 		{
-			selectedCrops.clear();
+			selectedCropEntries.clear();
 			selectedCropsModel.clear();
 			updateChanceDisplay();
 		}
