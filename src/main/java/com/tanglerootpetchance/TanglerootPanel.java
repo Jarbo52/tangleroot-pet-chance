@@ -28,7 +28,10 @@ public class TanglerootPanel extends PluginPanel
 	public TanglerootPanel()
 	{
 		super(false);
-		
+	}
+
+	public void init()
+	{
 		try
 		{
 			availableCrops.addAll(CropLoader.loadCrops());

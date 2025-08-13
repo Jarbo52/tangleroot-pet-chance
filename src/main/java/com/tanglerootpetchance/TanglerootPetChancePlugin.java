@@ -1,6 +1,7 @@
 package com.tanglerootpetchance;
 
 import com.google.inject.Provides;
+import com.google.inject.Injector;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
@@ -25,33 +26,26 @@ public class TanglerootPetChancePlugin extends Plugin
 	@Inject
 	private TanglerootPetChanceConfig config;
 
+	@Inject
+	private Injector injector;
+
 	private TanglerootPanel panel;
 	private NavigationButton navigationButton;
 
 	@Override
 	protected void startUp() throws Exception
 	{
-		panel = new TanglerootPanel();
+		panel = injector.getInstance(TanglerootPanel.class);
+		panel.init();
 
-		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/tangleroot-icon.png");
+		final BufferedImage icon = ImageUtil.loadImageResource(getClass(), "tangleroot-icon.png");
 
-		if (icon != null)
-		{
-			navigationButton = NavigationButton.builder()
-				.tooltip("Tangleroot Pet Chance")
-				.icon(icon)
-				.priority(5)
-				.panel(panel)
-				.build();
-		}
-		else
-		{
-			navigationButton = NavigationButton.builder()
-				.tooltip("Tangleroot Pet Chance")
-				.priority(5)
-				.panel(panel)
-				.build();
-		}
+		navigationButton = NavigationButton.builder()
+			.tooltip("Tangleroot Pet Chance")
+			.icon(icon)
+			.priority(5)
+			.panel(panel)
+			.build();
 
 		clientToolbar.addNavigation(navigationButton);
 	}
