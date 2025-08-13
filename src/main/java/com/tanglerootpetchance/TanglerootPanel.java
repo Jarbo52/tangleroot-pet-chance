@@ -70,7 +70,6 @@ public class TanglerootPanel extends PluginPanel
 		patchTypeComboBox.addActionListener(e -> updateCropDropdown());
 		
 		cropComboBox = new JComboBox<>();
-		cropComboBox.addItem(null);
 
 		selectedCropsList = new JList<>(selectedCropsModel);
 		selectedCropsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -168,17 +167,26 @@ public class TanglerootPanel extends PluginPanel
 		String selectedPatchType = (String) patchTypeComboBox.getSelectedItem();
 		if (selectedPatchType == null || selectedPatchType.equals("Select patch type..."))
 		{
-			cropComboBox.addItem(null);
 			return;
 		}
 		
-		cropComboBox.addItem(null);
+		List<Crop> matchingCrops = new ArrayList<>();
 		for (Crop crop : availableCrops)
 		{
 			if (crop.getPatchType().equals(selectedPatchType))
 			{
-				cropComboBox.addItem(crop);
+				matchingCrops.add(crop);
 			}
+		}
+		
+		for (Crop crop : matchingCrops)
+		{
+			cropComboBox.addItem(crop);
+		}
+		
+		if (!matchingCrops.isEmpty())
+		{
+			cropComboBox.setSelectedItem(matchingCrops.get(0));
 		}
 	}
 
